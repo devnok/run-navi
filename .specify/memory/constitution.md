@@ -1,50 +1,66 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# RunInMap Constitution
+
+이 헌법은 RunInMap의 모든 spec, plan, tasks, 구현에 적용되는 최상위 원칙이다.
+조항끼리 충돌하면 번호가 낮은 조항이 우선한다.
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### 1. 코드 품질
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+- 1.1 범위: 현재 spec의 요구사항이나 사용자 스토리에 연결되지 않는 기능, 설정 옵션,
+  파라미터, 확장 지점은 추가하지 않는다.
+- 1.2 의존성: 신규 런타임 의존성을 추가하면 PR 설명에 도입 이유와 검토한 대안을
+  1줄 이상 적고, lock 파일 변경을 같은 PR에 포함한다.
+- 1.3 정적 검사: 린트와 타입 검사의 오류·경고가 0건일 때만 머지한다.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+근거: 필요 없는 코드와 의존성은 유지 비용만 늘린다. 정적 검사는 사람의 리뷰 없이
+위반을 판정할 수 있는 가장 싼 게이트다.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### 2. 테스트
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+- 2.1 대상: plan.md에 테스트 대상 함수 목록을 적는다. 목록의 함수는 정상 케이스
+  1개 이상, 경계값 또는 오류 케이스 1개 이상의 자동화 테스트를 가진다.
+- 2.2 커버리지: UI 렌더링 코드를 제외한 신규/변경 라인의 테스트 커버리지는 80% 이상이다.
+  전체 커버리지를 낮추는 PR은 PR 설명에 사유를 적는다.
+- 2.3 계약 테스트: 외부와 주고받는 데이터의 스키마와 페이로드는 계약 테스트를 가진다.
+  스키마는 픽스처로 고정하며, 픽스처와 코드가 어긋나면 테스트가 실패한다.
+- 2.4 결정성: 테스트는 실제 네트워크, 저장소, 화면, 실시간 시계에 의존하지 않는다.
+  시간은 주입 가능한 클럭으로, 외부 시스템은 페이크/목으로 대체한다.
+- 2.5 회귀 테스트: 버그 수정 PR은 수정을 되돌리면 실패하는 회귀 테스트를 포함한다.
+- 2.6 머지 조건: 실패하는 테스트가 하나라도 있으면 머지하지 않는다.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+근거: 거리·페이스·시간 계산과 외부 연동은 눈으로 확인하기 어렵고 회귀가 잦다.
+결정적인 테스트만 실패 원인을 코드로 좁힐 수 있다.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### 3. 사용자 경험
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+- 3.1 상태 표시: 로딩, 오류, 빈 상태, 확인 요청은 상태별 공통 컴포넌트로만 렌더링한다.
+- 3.2 값 표기: 날짜, 시간, 숫자, 단위는 공통 포맷 함수로만 표기한다.
+  이 포맷 함수는 2.1의 테스트 대상이다.
+- 3.3 용어: 같은 개념은 모든 화면에서 같은 단어로 부른다.
+- 3.4 오류 메시지: 무엇이 실패했는지와 사용자가 할 수 있는 다음 행동을 모두 적는다.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+근거: 일관성은 기준이 한 곳에 있을 때만 유지된다. 공통 컴포넌트와 포맷 함수를
+거치지 않은 코드는 리뷰에서 바로 위반으로 판정할 수 있다.
+
+### 4. 보안
+
+- 4.1 시크릿: API 키, 토큰, 비밀번호는 코드, 설정 파일, 로그에 평문으로 넣지 않는다.
+  환경변수 또는 시크릿 매니저로만 주입한다.
+- 4.2 권한: 위치, 알림 등 기기 권한은 해당 기능을 처음 사용하는 시점에 필요한 최소
+  범위만 요청한다.
+- 4.3 입력 검증: 외부에서 들어온 데이터는 검증·정규화한 뒤에만 처리하거나 저장한다.
+
+근거: 위치 기록은 민감한 개인정보이고 지도 API 키는 유출 시 비용이 발생한다.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+- G.1 우선순위: 이 헌법은 프로젝트의 다른 관행과 지침보다 우선한다.
+- G.2 개정: 이 문서를 직접 수정하고 커밋 메시지에 변경 이유를 적는다.
+- G.3 버전: Semantic Versioning을 따른다.
+  - MAJOR: 원칙 삭제 또는 기존 규칙과 호환되지 않는 변경
+  - MINOR: 원칙, 섹션, 규칙 추가
+  - PATCH: 의미가 바뀌지 않는 문구 수정
+- G.4 판정 가능성: 새 조항을 추가할 때는 위반을 어떻게 판정하는지 함께 적는다.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-11-17 | **Last Amended**: 2026-11-17
